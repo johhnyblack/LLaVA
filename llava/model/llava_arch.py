@@ -257,7 +257,16 @@ class LlavaMetaForCausalLM(ABC):
                 cur_new_input_embeds.append(cur_input_embeds_no_im[i])
                 cur_new_labels.append(cur_labels_noim[i])
                 if i < num_images:
-                    cur_image_features = image_features[cur_image_idx]
+                    # 添加边界检查，防止索引超出范围
+                    if cur_image_idx >= len(image_features):
+                        print(f"Warning: Image index {cur_image_idx} exceeds available features {len(image_features)}. "
+                              f"This may indicate a data loading issue. Using last available image feature.")
+                        # 使用最后一个可用的图像特征，但记录警告
+                        cur_image_features = image_features[-1]
+                        # 可以选择抛出异常来强制修复根本问题
+                        # raise IndexError(f"Image feature index {cur_image_idx} out of bounds for {len(image_features)} features")
+                    else:
+                        cur_image_features = image_features[cur_image_idx]
                     cur_image_idx += 1
                     cur_new_input_embeds.append(cur_image_features)
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))

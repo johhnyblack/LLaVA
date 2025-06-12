@@ -95,23 +95,33 @@ def eval_model(args):
 
     data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config)
 
-    for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
+    for batch_idx, ((input_ids, image_tensor, image_sizes), line) in enumerate(tqdm(zip(data_loader, questions), total=len(questions))):
         idx = line["question_id"]
         cur_prompt = line["text"]
+        
+        # 添加调试信息
+        print(f"Processing batch {batch_idx}, question_id {idx}, image_tensor shape: {image_tensor.shape}")
 
         input_ids = input_ids.to(device='cuda', non_blocking=True)
 
         with torch.inference_mode():
-            output_ids = model.generate(
-                input_ids,
-                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
-                image_sizes=image_sizes,
-                do_sample=True if args.temperature > 0 else False,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                num_beams=args.num_beams,
-                max_new_tokens=args.max_new_tokens,
-                use_cache=True)
+            try:
+                output_ids = model.generate(
+                    input_ids,
+                    images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
+                    image_sizes=image_sizes,
+                    do_sample=True if args.temperature > 0 else False,
+                    temperature=args.temperature,
+                    top_p=args.top_p,
+                    num_beams=args.num_beams,
+                    max_new_tokens=args.max_new_tokens,
+                    use_cache=True)
+            except Exception as e:
+                print(f"Error processing question {idx}: {e}")
+                print(f"Input IDs shape: {input_ids.shape}")
+                print(f"Image tensor shape: {image_tensor.shape}")
+                print(f"Image sizes: {image_sizes}")
+                raise
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 

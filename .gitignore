@@ -13,6 +13,16 @@ dist
 # Data
 !**/alpaca-data-conversation.json
 
+# Images - ignore all image files in all subdirectories
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.bmp
+**/*.tiff
+**/*.webp
+**/*.zip
+
 # Editor
 .idea
 *.swp
