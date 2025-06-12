@@ -23,6 +23,10 @@ dist
 **/*.webp
 **/*.zip
 
+# Directories
+train2017/
+**/train2017/
+
 # Editor
 .idea
 *.swp
